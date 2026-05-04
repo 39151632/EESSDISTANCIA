@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distancias OPESSA — Calculadora por Carretera</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07090f;
+  --s1: #0f1623;
+  --s2: #162133;
+  --border: #1e2d45;
+  --cyan: #00d4ff;
+  --orange: #ff6b35;
+  --purple: #a78bfa;
+  --green: #10b981;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --muted: #546882;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative; z-index: 1;
+  padding: 28px 40px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg,rgba(0,212,255,.05) 0%,transparent 100%);
+  display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+  color: var(--cyan); text-transform: uppercase;
+}
+.logo em { color: var(--orange); font-style: normal; }
+.header-title { flex: 1; }
+.header-title h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: var(--muted); letter-spacing: 2px; text-transform: uppercase;
+}
+.header-title p {
+  font-size: 11px; color: var(--muted); margin-top: 3px;
+}
+
+/* ── MAIN ── */
+main { position: relative; z-index: 1; max-width: 1500px; margin: 0 auto; padding: 28px 40px; }
+
+/* ── REF SELECTOR ── */
+.ref-panel {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.ref-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--muted); white-space: nowrap;
+}
+.ref-select {
+  flex: 1; min-width: 260px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: var(--text); outline: none; cursor: pointer;
+  transition: border-color .2s;
+}
+.ref-select:focus { border-color: var(--cyan); }
+.ref-info {
+  font-size: 11px; color: var(--muted); flex: 1;
+}
+.ref-info strong { color: var(--cyan); }
+
+/* ── CONTROLS ── */
+.controls {
+  display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+}
+.btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; padding: 11px 22px;
+  border: none; border-radius: 5px; cursor: pointer;
+  transition: all .18s; display: flex; align-items: center; gap: 8px;
+  white-space: nowrap;
+}
+.btn-start { background: var(--cyan); color: #000; }
+.btn-start:hover:not(:disabled) { background: #33dcff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,212,255,.3); }
+.btn-start:disabled { opacity: .45; cursor: not-allowed; }
+.btn-stop { background: transparent; color: var(--red); border: 1px solid var(--red); }
+.btn-stop:hover:not(:disabled) { background: rgba(239,68,68,.1); }
+.btn-stop:disabled { opacity: .35; cursor: not-allowed; }
+.btn-xl { background: var(--green); color: #000; }
+.btn-xl:hover:not(:disabled) { background: #34d399; }
+.btn-xl:disabled { opacity: .35; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+.btn-ghost:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ── PROGRESS ── */
+.prog-box {
+  display: none;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 8px; padding: 18px 24px; margin-bottom: 20px;
+}
+.prog-box.on { display: block; }
+.prog-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 11px; }
+.prog-lbl { color: var(--muted); }
+.prog-cnt { color: var(--cyan); font-weight: 600; }
+.prog-track { background: var(--border); height: 5px; border-radius: 3px; overflow: hidden; }
+.prog-fill {
+  height: 100%; border-radius: 3px; width: 0;
+  background: linear-gradient(90deg, var(--cyan), var(--orange));
+  transition: width .4s ease;
+}
+.prog-status { margin-top: 10px; font-size: 11px; color: var(--muted); }
+
+/* debug log */
+.debug-box {
+  background: #000; border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 16px; margin-top: 12px;
+  font-size: 11px; color: var(--muted); max-height: 90px; overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace; display: none;
+}
+.debug-box.on { display: block; }
+.debug-box .ok { color: var(--green); }
+.debug-box .err { color: var(--red); }
+.debug-box .info { color: var(--cyan); }
+
+/* ── STATS ── */
+.stats { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 14px; margin-bottom: 20px; }
+.stat {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 7px; padding: 14px 18px;
+}
+.stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 5px; }
+.stat-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; }
+.c-cyan { color: var(--cyan); }
+.c-orange { color: var(--orange); }
+.c-purple { color: var(--purple); }
+.c-green { color: var(--green); }
+
+/* ── TABLE CONTROLS ── */
+.tbl-ctrl { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.search {
+  flex: 1; min-width: 200px;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 5px; padding: 9px 14px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--text); outline: none;
+}
+.search:focus { border-color: var(--cyan); }
+.search::placeholder { color: var(--muted); }
+select.sort {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 5px; padding: 9px 14px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--text); outline: none; cursor: pointer;
+}
+
+/* ── TABLE ── */
+.tbl-wrap {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 8px; overflow: hidden; overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 860px; }
+thead { background: var(--s2); border-bottom: 1px solid var(--border); }
+th {
+  padding: 13px 14px; text-align: left;
+  font-family: 'Syne', sans-serif; font-size: 10px;
+  font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+  cursor: pointer; user-select: none;
+  transition: color .15s;
+}
+th:hover { color: var(--cyan); }
+td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(30,45,69,.5);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(0,212,255,.025); }
+tr.ref-row td { background: rgba(0,212,255,.05); border-left: 2px solid var(--cyan); }
+.apies-num { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; }
+.apies-num.is-ref { color: var(--cyan); }
+.op-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addr { font-size: 10px; color: var(--muted); margin-top: 2px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coord { font-size: 11px; color: var(--muted); }
+.dist-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+.dist-bar-bg { width: 70px; height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; }
+.dist-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--green), var(--yellow), var(--orange)); }
+.time-val { color: var(--purple); font-size: 12px; }
+.method-badge {
+  font-size: 9px; padding: 2px 6px; border-radius: 3px;
+  text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; display: inline-block;
+}
+.method-route { background: rgba(16,185,129,.15); color: var(--green); }
+.method-linear { background: rgba(245,158,11,.15); color: var(--yellow); }
+.status-pending { color: var(--muted); font-size: 11px; }
+.status-loading { color: var(--muted); font-size: 11px; animation: blink 1.2s ease-in-out infinite; }
+.status-error { color: var(--red); font-size: 11px; }
+.ref-label-cell { color: var(--cyan); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.map-link { color: var(--cyan); font-size: 10px; text-decoration: none; opacity: .7; transition: opacity .15s; display: block; margin-top: 2px; }
+.map-link:hover { opacity: 1; text-decoration: underline; }
+.empty { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+
+/* ── FOOTER ── */
+footer {
+  text-align: center; padding: 20px;
+  font-size: 10px; color: var(--muted);
+  border-top: 1px solid var(--border); margin-top: 32px;
+  position: relative; z-index: 1;
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--s2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px 18px;
+  font-size: 12px; z-index: 999; pointer-events: none;
+  transform: translateY(10px); opacity: 0;
+  transition: all .25s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media(max-width:700px) { main, header { padding: 16px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">OPES<em>SA</em></div>
+  <div class="header-title">
+    <h1>Calculadora de Distancias por Carretera</h1>
+    <p>Motor de ruteo OSRM · OpenStreetMap · Ruta más óptima en vehículo</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- REF SELECTOR -->
+  <div class="ref-panel">
+    <div class="ref-label">📍 Punto de referencia</div>
+    <select class="ref-select" id="refSelect" onchange="onRefChange()">
+      <option value="">— Seleccioná un APIES —</option>
+    </select>
+    <div class="ref-info" id="refInfo">Seleccioná el APIES desde el cual calcular todas las distancias.</div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="btn btn-start" id="btnCalc" onclick="startCalc()" disabled>▶ Calcular distancias</button>
+    <button class="btn btn-stop" id="btnStop" onclick="stopCalc()" disabled>■ Detener</button>
+    <button class="btn btn-ghost" id="btnReset" onclick="resetCalc()" disabled>↺ Limpiar resultados</button>
+    <button class="btn btn-xl" id="btnXlsx" onclick="exportXLSX()" disabled>↓ Exportar Excel</button>
+    <button class="btn btn-ghost" id="btnCsv" onclick="exportCSV()" disabled>↓ CSV</button>
+    <button class="btn btn-ghost" onclick="toggleDebug()" style="margin-left:auto;font-size:10px;padding:8px 14px;">🔧 Debug</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="prog-box" id="progBox">
+    <div class="prog-top">
+      <span class="prog-lbl" id="progLbl">Iniciando cálculo...</span>
+      <span class="prog-cnt" id="progCnt">0 / 0</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-status" id="progStatus"></div>
+    <div class="debug-box" id="debugBox"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Total estaciones</div><div class="stat-val c-cyan" id="sTotal">138</div></div>
+    <div class="stat"><div class="stat-lbl">Calculadas</div><div class="stat-val c-green" id="sDone">0</div></div>
+    <div class="stat"><div class="stat-lbl">Con ruta real</div><div class="stat-val c-green" id="sRouted">0</div></div>
+    <div class="stat"><div class="stat-lbl">Distancia máxima</div><div class="stat-val c-orange" id="sMax">—</div></div>
+    <div class="stat"><div class="stat-lbl">Distancia mínima</div><div class="stat-val c-cyan" id="sMin">—</div></div>
+    <div class="stat"><div class="stat-lbl">Promedio</div><div class="stat-val c-purple" id="sAvg">—</div></div>
+  </div>
+
+  <!-- TABLE CONTROLS -->
+  <div class="tbl-ctrl">
+    <input class="search" id="searchBox" type="text" placeholder="Buscar APIES, operador, localidad..." oninput="renderTable()">
+    <select class="sort" id="sortSel" onchange="renderTable()">
+      <option value="apies">APIES ↑</option>
+      <option value="dist_asc">Distancia ↑</option>
+      <option value="dist_desc">Distancia ↓</option>
+      <option value="time_asc">Tiempo ↑</option>
+      <option value="localidad">Localidad A-Z</option>
+    </select>
+  </div>
+
+  <!-- TABLE -->
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>APIES</th>
+          <th>Operador</th>
+          <th>Localidad</th>
+          <th>Coord X (Lon)</th>
+          <th>Coord Y (Lat)</th>
+          <th>Distancia</th>
+          <th>Tiempo estimado</th>
+          <th>Ver ruta</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:14px;">
+    <span>★ = Punto de referencia seleccionado</span>
+    <span><span style="color:var(--green)">■</span> Ruta real por carretera (OSRM)</span>
+    <span><span style="color:var(--yellow)">■</span> Distancia lineal ×1.35 (estimada si falla la ruta)</span>
+    <span><span style="color:var(--red)">■</span> Error / sin datos</span>
+  </div>
+</main>
+
+<footer>Ruteo por carretera: OSRM (OpenStreetMap) · Fallback: distancia haversine ×1.35 · OPESSA Red de Estaciones de Servicio</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════
+const STATIONS = [{"APIES":2928,"COORDENADA_X":-62.38347,"COORDENADA_Y":-37.03879,"OPERADOR":"OPESSA GUAMINI","DIRECCION":"RUTA PROVINCIAL 65 ASCENDENTE Y RUTA NACIONAL 33","LOCALIDAD":"GUAMINI"},{"APIES":1005,"COORDENADA_X":-60.82234,"COORDENADA_Y":-32.65362,"OPERADOR":"OPESSA LA RIBERA","DIRECCION":"AUTOPISTA BRIGADIER ESTANISLAO LOPEZ KM 28 ASCENDENTE","LOCALIDAD":"TIMBUES"},{"APIES":30548,"COORDENADA_X":-58.5909,"COORDENADA_Y":-34.4872,"OPERADOR":"OPESSA BANCALARI RN9","DIRECCION":"AUTOPISTA 9 KM 23.5 ASCENDENTE","LOCALIDAD":"SAN ISIDRO"},{"APIES":31039,"COORDENADA_X":-62.2454327,"COORDENADA_Y":-32.63832464,"OPERADOR":"OPESSA LEONES","DIRECCION":"AUTOPISTA AUTOVIA ROSARIO - CORDOBA KM 448 ASCENDENTE","LOCALIDAD":"LEONES"},{"APIES":3300,"COORDENADA_X":-57.70929,"COORDENADA_Y":-36.25745,"OPERADOR":"OPESSA DOLORES","DIRECCION":"RUTA NACIONAL 2 KM 202.3 ASCENDENTE","LOCALIDAD":"DOLORES"},{"APIES":30977,"COORDENADA_X":-67.1175,"COORDENADA_Y":-33.41254,"OPERADOR":"OPESSA DESAGUADERO","DIRECCION":"RUTA NACIONAL 7 KM 862 ASCENDENTE","LOCALIDAD":"DESAGUADERO"},{"APIES":1648,"COORDENADA_X":-62.98867,"COORDENADA_Y":-35.03745,"OPERADOR":"OPESSA ACA GRAL. VILLEGAS","DIRECCION":"RUTA NACIONAL 188 ASCENDENTE Y RUTA NAC 33","LOCALIDAD":"GENERAL VILLEGAS"},{"APIES":2052,"COORDENADA_X":-62.12754,"COORDENADA_Y":-31.42454,"OPERADOR":"OPESSA SAN FRANCISCO","DIRECCION":"RUTA NACIONAL 19 ASCENDENTE Y RUTA NAC. 158","LOCALIDAD":"SAN FRANCISCO"},{"APIES":1840,"COORDENADA_X":-70.07719,"COORDENADA_Y":-40.04849,"OPERADOR":"OPESSA ACA PIEDRA DEL AGUILA","DIRECCION":"RUTA NACIONAL 237 KM 1446 ASCENDENTE","LOCALIDAD":"PIEDRA DEL AGUILA"},{"APIES":1981,"COORDENADA_X":-62.721,"COORDENADA_Y":-36.00137,"OPERADOR":"OPESSA ACA TRENQUE LAUQUEN RN5","DIRECCION":"RUTA NACIONAL 5 KM 446 DESCENDENTE","LOCALIDAD":"TRENQUE LAUQUEN"},{"APIES":2064,"COORDENADA_X":-60.45887,"COORDENADA_Y":-33.227,"OPERADOR":"OPESSA FIGHIERA RN9 MANO PROVINCIA","DIRECCION":"AUTOPISTA P E ARAMBURU KM 256 ASCENDENTE","LOCALIDAD":"FIGHIERA"},{"APIES":3253,"COORDENADA_X":-58.93797,"COORDENADA_Y":-34.19872,"OPERADOR":"OPESSA CAMPANA KM72 MANO PROVINCIA","DIRECCION":"RUTA NACIONAL PANAMERICANA KM 72 ASCENDENTE","LOCALIDAD":"CAMPANA"},{"APIES":1686,"COORDENADA_X":-60.84512,"COORDENADA_Y":-34.6575,"OPERADOR":"OPESSA JUNIN RN7","DIRECCION":"RUTA NACIONAL 7 KM 246 DESCENDENTE","LOCALIDAD":"JUNIN"},{"APIES":421,"COORDENADA_X":-59.01384,"COORDENADA_Y":-34.12114,"OPERADOR":"OPESSA ACA ZARATE","DIRECCION":"RUTA NACIONAL 12 ASCENDENTE Y 193","LOCALIDAD":"ZARATE"},{"APIES":2908,"COORDENADA_X":-59.77805,"COORDENADA_Y":-35.62447,"OPERADOR":"OPESSA SALADILLO","DIRECCION":"RUTA NACIONAL 205 KM 182 DESCENDENTE Y FROCHAM","LOCALIDAD":"SALADILLO"},{"APIES":1641,"COORDENADA_X":-67.57905,"COORDENADA_Y":-39.04304,"OPERADOR":"OPESSA ACA GENERAL ROCA","DIRECCION":"AVENIDA ROCA 20 Y BOLIVIA","LOCALIDAD":"GENERAL ROCA"},{"APIES":2536,"COORDENADA_X":-58.50639,"COORDENADA_Y":-34.7117,"OPERADOR":"OPESSA RICCHIERI MANO EZEIZA","DIRECCION":"AUTOPISTA TTE GRAL PABLO RICCHIERI KM 33 ASCENDENTE","LOCALIDAD":"ALDO BONZI"},{"APIES":2905,"COORDENADA_X":-54.56255,"COORDENADA_Y":-25.60447,"OPERADOR":"OPESSA PUERTO IGUAZU","DIRECCION":"RUTA NACIONAL 12 KM 1639.3 ASCENDENTE","LOCALIDAD":"PUERTO IGUAZU"},{"APIES":2985,"COORDENADA_X":-58.52071741,"COORDENADA_Y":-34.51349633,"OPERADOR":"OPESSA DEBENEDETTI RN9 MANO PROVINCIA","DIRECCION":"RUTA NACIONAL PANAMERICANA ASCENDENTE Y ACCESO DEBENEDETTI","LOCALIDAD":"OLIVOS"},{"APIES":1862,"COORDENADA_X":-62.08229,"COORDENADA_Y":-38.88529,"OPERADOR":"OPESSA ACA PUNTA ALTA","DIRECCION":"ROSALES 21 Y COLON","LOCALIDAD":"PUNTA ALTA"},{"APIES":2119,"COORDENADA_X":-64.55372,"COORDENADA_Y":-31.98675,"OPERADOR":"OPESSA VILLA GRAL. BELGRANO","DIRECCION":"RUTA PROVINCIAL 5 ASCENDENTE Y CHAMPAQUI","LOCALIDAD":"VILLA GENERAL BELGRANO"},{"APIES":3254,"COORDENADA_X":-58.93847,"COORDENADA_Y":-34.19905,"OPERADOR":"OPESSA CAMPANA KM72 MANO CABA","DIRECCION":"RUTA NACIONAL PANAMERICANA KM 72 DESCENDENTE","LOCALIDAD":"CAMPANA"},{"APIES":1182,"COORDENADA_X":-58.72305,"COORDENADA_Y":-34.4562,"OPERADOR":"OPESSA PILAR RN8 MANO PROVINCIA","DIRECCION":"AUTOPISTA DEL SOL RAMAL PILAR (LADO PILAR) KM 36.5 ASCENDENTE","LOCALIDAD":"TORTUGUITAS"},{"APIES":1454,"COORDENADA_X":-57.11825,"COORDENADA_Y":-29.72284,"OPERADOR":"OPESSA PASO DE LOS LIBRES","DIRECCION":"RUTA NACIONAL 117 KM 9 ASCENDENTE","LOCALIDAD":"PASO DE LOS LIBRES"},{"APIES":1142,"COORDENADA_X":-58.7057,"COORDENADA_Y":-34.43964,"OPERADOR":"OPESSA GARIN RN9 MANO PROVINCIA","DIRECCION":"AUTOPISTA DEL SOL RAMAL CAMPANA (LADO CAMPANA) KM 36.5 ASCENDENTE","LOCALIDAD":"TORTUGUITAS"},{"APIES":856,"COORDENADA_X":-60.99064,"COORDENADA_Y":-32.03042,"OPERADOR":"OPESSA COLASTINE","DIRECCION":"AUTOPISTA ROSARIO / SANTA FE KM 101 ASCENDENTE","LOCALIDAD":"AROCENA"},{"APIES":1702,"COORDENADA_X":-59.08439471,"COORDENADA_Y":-36.02751772,"OPERADOR":"OPESSA LAS FLORES","DIRECCION":"RUTA NACIONAL 3 KM 187.3 ASCENDENTE Y AVENIDA MANUEL VENANCIO PAZ","LOCALIDAD":"LAS FLORES"},{"APIES":2563,"COORDENADA_X":-58.50775,"COORDENADA_Y":-34.71472,"OPERADOR":"OPESSA RICCHIERI MANO CABA","DIRECCION":"AUTOPISTA TTE GRAL PABLO RICCHIERI KM 36.3 DESCENDENTE","LOCALIDAD":"ALDO BONZI"},{"APIES":3299,"COORDENADA_X":-58.30322,"COORDENADA_Y":-34.68492,"OPERADOR":"OPESSA AUBASA MANO CABA","DIRECCION":"AUTOPISTA LA PLATA / BUENOS AIRES KM 13.5 ASCENDENTE","LOCALIDAD":"AVELLANEDA"},{"APIES":1317,"COORDENADA_X":-58.89462,"COORDENADA_Y":-27.44067,"OPERADOR":"OPESSA ACA BARRANQUERAS","DIRECCION":"RUTA NACIONAL 16 KM 6 ASCENDENTE","LOCALIDAD":"BARRANQUERAS"},{"APIES":2989,"COORDENADA_X":-61.46484,"COORDENADA_Y":-31.25759,"OPERADOR":"OPESSA RAFAELA RIO DE JANEIRO","DIRECCION":"AVENIDA SANTA FE 2460 Y RIO DE JANEIRO","LOCALIDAD":"RAFAELA"},{"APIES":525,"COORDENADA_X":-57.92712,"COORDENADA_Y":-34.90692,"OPERADOR":"OPESSA BERISSO 122 Y 60","DIRECCION":"CALLE 122 Y CALLE 60","LOCALIDAD":"BERISSO"},{"APIES":857,"COORDENADA_X":-60.28755,"COORDENADA_Y":-38.36092,"OPERADOR":"OPESSA TRES ARROYOS RN3","DIRECCION":"RUTA NACIONAL 3 ASCENDENTE Y VELEZ SARFIELD","LOCALIDAD":"TRES ARROYOS"},{"APIES":2991,"COORDENADA_X":-58.98241,"COORDENADA_Y":-34.58522,"OPERADOR":"OPESSA ACCESO OESTE RN7 MANO LUJAN","DIRECCION":"RUTA NACIONAL 7 KM 54.8 ASCENDENTE","LOCALIDAD":"GENERAL RODRIGUEZ"},{"APIES":977,"COORDENADA_X":-60.46054,"COORDENADA_Y":-33.22834,"OPERADOR":"OPESSA FIGHIERA RN9 MANO CABA","DIRECCION":"AUTOPISTA AUT.GRAL.ARAMBURU RN N9 KM 256 DESCENDENTE","LOCALIDAD":"FIGHIERA"},{"APIES":3003,"COORDENADA_X":-58.72417,"COORDENADA_Y":-34.45654,"OPERADOR":"OPESSA PILAR RN8 MANO CABA","DIRECCION":"AUTOPISTA DEL SOL RAMAL PILAR (LADO BS AS) KM 36.5 DESCENDENTE","LOCALIDAD":"TORTUGUITAS"},{"APIES":2987,"COORDENADA_X":-58.52234,"COORDENADA_Y":-34.51312,"OPERADOR":"OPESSA DEBENEDETTI RN9 MANO CABA","DIRECCION":"RUTA NACIONAL PANAMERICANA DESCENDENTE Y ACCESO DEBENEDETTI","LOCALIDAD":"OLIVOS"},{"APIES":3298,"COORDENADA_X":-58.30547,"COORDENADA_Y":-34.68495,"OPERADOR":"OPESSA AUBASA MANO LA PLATA","DIRECCION":"AUTOPISTA BUENOS AIRES - LA PLATA KM 13.5 DESCENDENTE","LOCALIDAD":"AVELLANEDA"},{"APIES":1173,"COORDENADA_X":-59.8425,"COORDENADA_Y":-36.79459,"OPERADOR":"OPESSA ACA AZUL","DIRECCION":"RUTA NACIONAL 3 KM 299 DESCENDENTE Y CAMINO VIEJO A TANDIL","LOCALIDAD":"AZUL"},{"APIES":2992,"COORDENADA_X":-58.98255,"COORDENADA_Y":-34.58576,"OPERADOR":"OPESSA ACCESO OESTE RN7 MANO CABA","DIRECCION":"RUTA NACIONAL 7 KM 54.8 DESCENDENTE","LOCALIDAD":"GENERAL RODRIGUEZ"},{"APIES":2904,"COORDENADA_X":-59.04729,"COORDENADA_Y":-34.13489,"OPERADOR":"OPESSA ZARATE RN12","DIRECCION":"RUTA NACIONAL 193 KM 3 DESCENDENTE","LOCALIDAD":"ZARATE"},{"APIES":3329,"COORDENADA_X":-58.70625,"COORDENADA_Y":-34.43997,"OPERADOR":"OPESSA GARIN RN9 MANO CABA","DIRECCION":"AUTOPISTA DEL SOL RAMAL CAMPANA (LADO A BS. AS.) KM 36.5 DESCENDENTE","LOCALIDAD":"TORTUGUITAS"},{"APIES":907,"COORDENADA_X":-59.65554,"COORDENADA_Y":-29.1435,"OPERADOR":"OPESSA ACA RECONQUISTA","DIRECCION":"BOULEVARD HIPOLITO YRIGOYEN Y PATRICIO DIEZ","LOCALIDAD":"RECONQUISTA"},{"APIES":3338,"COORDENADA_X":-61.97705,"COORDENADA_Y":-33.75042,"OPERADOR":"OPESSA VENADO TUERTO","DIRECCION":"RUTA NACIONAL 8 ASCENDENTE E H. YRIGOYEN","LOCALIDAD":"VENADO TUERTO"},{"APIES":335,"COORDENADA_X":-58.79139,"COORDENADA_Y":-34.6333,"OPERADOR":"OPESSA MORENO","DIRECCION":"DIAGONAL NORTE Y ACCESO OESTE","LOCALIDAD":"MORENO"},{"APIES":99020,"COORDENADA_X":-57.91716774,"COORDENADA_Y":-34.89871054,"OPERADOR":"OPESSA FULL YPF YTEC","DIRECCION":"AVENIDA DEL PETROLEO S/N 129 Y 143","LOCALIDAD":"ENSENADA"},{"APIES":167,"COORDENADA_X":-58.48009,"COORDENADA_Y":-34.5308,"OPERADOR":"OPESSA VICENTE LOPEZ MAIPU","DIRECCION":"AVENIDA MAIPU 760 Y GUEMES","LOCALIDAD":"VICENTE LOPEZ"},{"APIES":348,"COORDENADA_X":-56.82707894,"COORDENADA_Y":-37.07838386,"OPERADOR":"OPESSA ECER MOVIL LIQUIDOS","DIRECCION":"MACACHA GUEMES 515","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":99010,"COORDENADA_X":-58.36224072,"COORDENADA_Y":-34.60541612,"OPERADOR":"OPESSA FULL YPF MADERO","DIRECCION":"MACACHA GUEMES 515","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":3159,"COORDENADA_X":-58.37225,"COORDENADA_Y":-34.58709,"OPERADOR":"OPESSA CABA RETIRO TERMINAL","DIRECCION":"AVENIDA ANTARTIDA ARGENTINA Y CALLE 10","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":13323,"COORDENADA_X":-58.48037,"COORDENADA_Y":-34.57347,"OPERADOR":"OPESSA OLAZABAL","DIRECCION":"AVENIDA ALVAREZ THOMAS Y OLAZABAL","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":357,"COORDENADA_X":-56.82700712,"COORDENADA_Y":-37.07828439,"OPERADOR":"OPESSA ECER MOVIL FULL","DIRECCION":"MACACHA GUEMES 515","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":99053,"COORDENADA_X":-68.05401309,"COORDENADA_Y":-38.94951044,"OPERADOR":"OPESSA FULL YPF TALERO","DIRECCION":"TALERO 360 ENTRE CORDOBA Y MENDOZA","LOCALIDAD":"NEUQUEN"},{"APIES":3267,"COORDENADA_X":-58.52572,"COORDENADA_Y":-34.50534,"OPERADOR":"OPESSA MARTINEZ EDISON","DIRECCION":"AVENIDA EDISON Y LA HABANA","LOCALIDAD":"MARTINEZ"},{"APIES":3326,"COORDENADA_X":-58.38084,"COORDENADA_Y":-34.66939,"OPERADOR":"OPESSA AVELLANEDA YRIGOYEN","DIRECCION":"AVENIDA HIPOLITO YRIGOYEN 1067","LOCALIDAD":"AVELLANEDA"},{"APIES":403,"COORDENADA_X":-58.40125,"COORDENADA_Y":-34.75554,"OPERADOR":"OPESSA ACA LOMAS DE ZAMORA","DIRECCION":"AVENIDA HIPOLITO YRIGOYEN 8590","LOCALIDAD":"LOMAS DE ZAMORA"},{"APIES":1073,"COORDENADA_X":-60.53017,"COORDENADA_Y":-31.72795,"OPERADOR":"OPESSA ACA PARANA","DIRECCION":"AVENIDA BUENOS AIRES 333 Y LAPRIDA","LOCALIDAD":"PARANA"},{"APIES":1088,"COORDENADA_X":-60.5077,"COORDENADA_Y":-31.74825,"OPERADOR":"OPESSA PARANA ALMAFUERTE","DIRECCION":"AVENIDA ALMAFUERTE 795 Y AYACUCHO","LOCALIDAD":"PARANA"},{"APIES":3002,"COORDENADA_X":-58.6302,"COORDENADA_Y":-34.6533,"OPERADOR":"OPESSA ACA MORON","DIRECCION":"AVENIDA BARTOLOME MITRE 1666 Y TOMAS GUIDO","LOCALIDAD":"MORON"},{"APIES":3296,"COORDENADA_X":-60.64584,"COORDENADA_Y":-32.94345,"OPERADOR":"OPESSA ROSARIO ESPANA","DIRECCION":"SANTA FE 1694 Y ESPANA","LOCALIDAD":"ROSARIO"},{"APIES":304,"COORDENADA_X":-58.63452627,"COORDENADA_Y":-34.4605749,"OPERADOR":"OPESSA GRAL. PACHECO","DIRECCION":"RUTA NACIONAL 197 DESCENDENTE Y SARMIENTO","LOCALIDAD":"GENERAL PACHECO"},{"APIES":1984,"COORDENADA_X":-60.2718744,"COORDENADA_Y":-38.38113036,"OPERADOR":"OPESSA ACA TRES ARROYOS CENTRO","DIRECCION":"COLON Y LAVALLE","LOCALIDAD":"TRES ARROYOS"},{"APIES":866,"COORDENADA_X":-60.70267,"COORDENADA_Y":-31.63545,"OPERADOR":"OPESSA SANTA FE PELLEGRINI","DIRECCION":"BOULEVARD PELLEGRINI 2550","LOCALIDAD":"SANTA FE"},{"APIES":812,"COORDENADA_X":-60.63895,"COORDENADA_Y":-32.94297,"OPERADOR":"OPESSA ROSARIO URQUIZA","DIRECCION":"MITRE Y URQUIZA","LOCALIDAD":"ROSARIO"},{"APIES":1908,"COORDENADA_X":-71.2983,"COORDENADA_Y":-41.13264,"OPERADOR":"OPESSA ACA BARILOCHE","DIRECCION":"AVENIDA 12 DE OCTUBRE Y OTTO GOEDECKE","LOCALIDAD":"SAN CARLOS DE BARILOCHE"},{"APIES":959,"COORDENADA_X":-60.68839,"COORDENADA_Y":-32.9063,"OPERADOR":"OPESSA ACA ROSARIO MARULL","DIRECCION":"BOULEVARD RONDEAU 898 Y MARULL","LOCALIDAD":"ROSARIO"},{"APIES":3263,"COORDENADA_X":-64.20617,"COORDENADA_Y":-31.371,"OPERADOR":"OPESSA CORDOBA LA FRANCE","DIRECCION":"MONSENOR PABLO CABRERA Y CARDENOZA","LOCALIDAD":"CORDOBA"},{"APIES":1728,"COORDENADA_X":-57.54805,"COORDENADA_Y":-38.00925,"OPERADOR":"OPESSA MAR DEL PLATA CENTRO","DIRECCION":"ALBERTI 2128 Y BUENOS AIRES","LOCALIDAD":"MAR DEL PLATA"},{"APIES":2589,"COORDENADA_X":-65.30689,"COORDENADA_Y":-24.18292,"OPERADOR":"OPESSA JUJUY","DIRECCION":"GENERAL GUEMES Y LAMADRID","LOCALIDAD":"SAN SALVADOR DE JUJUY"},{"APIES":2101,"COORDENADA_X":-64.25164,"COORDENADA_Y":-31.3503,"OPERADOR":"OPESSA CORDOBA ARGUELLO","DIRECCION":"AVENIDA RECTA MARTINOLI Y TICHO BRAHE","LOCALIDAD":"CORDOBA"},{"APIES":2011,"COORDENADA_X":-56.97187,"COORDENADA_Y":-37.24497,"OPERADOR":"OPESSA VILLA GESELL","DIRECCION":"AVENIDA BUENOS AIRES Y BLVD GESELL","LOCALIDAD":"VILLA GESELL"},{"APIES":149,"COORDENADA_X":-58.5302,"COORDENADA_Y":-34.61814,"OPERADOR":"OPESSA BEIRO CABA","DIRECCION":"AVENIDA FRANCISCO BEIRO 5804 Y AV. GRAL. PAZ","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":31252,"COORDENADA_X":-68.8518731,"COORDENADA_Y":-32.9837738,"OPERADOR":"OPESSA MENDOZA CHACRAS","DIRECCION":"MARIANO BOEDO Y ACCESO SUR","LOCALIDAD":"LUJAN DE CUYO"},{"APIES":818,"COORDENADA_X":-58.43704,"COORDENADA_Y":-34.5515,"OPERADOR":"OPESSA ALCORTA CABA","DIRECCION":"AVENIDA FIGUEROA ALCORTA 6608 Y ECHEVERRIA","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":1854,"COORDENADA_X":-65.03875,"COORDENADA_Y":-42.7655,"OPERADOR":"OPESSA ACA PUERTO MADRYN","DIRECCION":"MARCOS A ZAR 25 Y AVENIDA IRIGOYEN","LOCALIDAD":"PUERTO MADRYN"},{"APIES":182,"COORDENADA_X":-58.48434,"COORDENADA_Y":-34.49855,"OPERADOR":"OPESSA LA LUCILA","DIRECCION":"AVENIDA DEL LIBERTADOR 3402 Y J INGENIEROS","LOCALIDAD":"LA LUCILA"},{"APIES":1458,"COORDENADA_X":-62.26875,"COORDENADA_Y":-38.71989,"OPERADOR":"OPESSA BAHIA BLANCA CENTRO","DIRECCION":"VIEYTES 24 Y COLON","LOCALIDAD":"BAHIA BLANCA"},{"APIES":2362,"COORDENADA_X":-65.2316786,"COORDENADA_Y":-26.82492418,"OPERADOR":"OPESSA TUCUMAN MATE DE LUNA MANO CERRO","DIRECCION":"AVENIDA MATE DE LUNA Y EJERCITO DEL NORTE","LOCALIDAD":"SAN MIGUEL DE TUCUMAN"},{"APIES":2917,"COORDENADA_X":-61.49409,"COORDENADA_Y":-31.25197,"OPERADOR":"OPESSA RAFAELA CENTRO","DIRECCION":"BOULEVARD ROCA Y ARENALES","LOCALIDAD":"RAFAELA"},{"APIES":1727,"COORDENADA_X":-56.6898,"COORDENADA_Y":-36.72084,"OPERADOR":"OPESSA MAR DE AJO","DIRECCION":"AVENIDA LIBERTADOR GRAL SAN MARTIN 1425","LOCALIDAD":"MAR DE AJO"},{"APIES":2744,"COORDENADA_X":-68.83912,"COORDENADA_Y":-32.89205,"OPERADOR":"OPESSA ACA MENDOZA","DIRECCION":"SAN MARTIN 958 Y AMIGORENA","LOCALIDAD":"MENDOZA CAPITAL"},{"APIES":2701,"COORDENADA_X":-68.8602,"COORDENADA_Y":-32.90192,"OPERADOR":"OPESSA MENDOZA 5TA SECCION","DIRECCION":"PASO DE LOS ANDES 16","LOCALIDAD":"MENDOZA CAPITAL"},{"APIES":1462,"COORDENADA_X":-62.2555,"COORDENADA_Y":-38.72047,"OPERADOR":"OPESSA BAHIA BLANCA BRANDSEN","DIRECCION":"BRANDSEN 306 Y LAMADRID","LOCALIDAD":"BAHIA BLANCA"},{"APIES":1956,"COORDENADA_X":-59.12654,"COORDENADA_Y":-37.33172,"OPERADOR":"OPESSA TANDIL","DIRECCION":"AVENIDA DR NICOLAS AVELLANEDA Y BOLIVAR","LOCALIDAD":"TANDIL"},{"APIES":3235,"COORDENADA_X":-64.28804,"COORDENADA_Y":-31.29942,"OPERADOR":"OPESSA ACA VILLA ALLENDE","DIRECCION":"AVENIDA GOYCOCHEA 1169","LOCALIDAD":"VILLA ALLENDE"},{"APIES":2848,"COORDENADA_X":-66.33495,"COORDENADA_Y":-33.29304,"OPERADOR":"OPESSA SAN LUIS","DIRECCION":"AVENIDA ESPANA Y MAIPU","LOCALIDAD":"SAN LUIS"},{"APIES":2907,"COORDENADA_X":-58.50692,"COORDENADA_Y":-34.57155,"OPERADOR":"OPESSA CONSTITUYENTES CABA","DIRECCION":"AVENIDA DE LOS CONSTITUYENTES 6070","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":2903,"COORDENADA_X":-58.25142,"COORDENADA_Y":-32.48745,"OPERADOR":"OPESSA ACA CONCEPCION DEL URUGUAY","DIRECCION":"GALARZA 1773 Y 9 DE JULIO","LOCALIDAD":"CONCEPCION DEL URUGUAY"},{"APIES":3048,"COORDENADA_X":-58.48484,"COORDENADA_Y":-34.6452,"OPERADOR":"OPESSA OLIVERA CABA","DIRECCION":"AVENIDA DIRECTORIO 4311 Y OLIVERA","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":2499,"COORDENADA_X":-65.29476175,"COORDENADA_Y":-26.81330641,"OPERADOR":"OPESSA TUCUMAN YERBA BUENA","DIRECCION":"AVENIDA ACONQUIJA 1784","LOCALIDAD":"YERBA BUENA"},{"APIES":3160,"COORDENADA_X":-58.42629,"COORDENADA_Y":-34.5963,"OPERADOR":"OPESSA PRINGLES CABA","DIRECCION":"AVENIDA CORDOBA 4201 Y PRINGLES","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":3340,"COORDENADA_X":-58.46687,"COORDENADA_Y":-34.55017,"OPERADOR":"OPESSA AZURDUY CABA","DIRECCION":"AVENIDA CABILDO 3501 Y JUANA AZURDUY","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":2822,"COORDENADA_X":-68.73819664,"COORDENADA_Y":-32.92308382,"OPERADOR":"OPESSA MENDOZA RODEO DE LA CRUZ","DIRECCION":"CARRIL NACIONAL","LOCALIDAD":"GUAYMALLEN"},{"APIES":3232,"COORDENADA_X":-58.275,"COORDENADA_Y":-34.71229,"OPERADOR":"OPESSA ACA BERNAL","DIRECCION":"AVENIDA ZAPIOLA 26 Y SAN MARTIN","LOCALIDAD":"BERNAL"},{"APIES":7,"COORDENADA_X":-58.47089,"COORDENADA_Y":-34.54595,"OPERADOR":"OPESSA CABILDO CABA","DIRECCION":"AVENIDA CABILDO 4108 Y VILELA","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":2916,"COORDENADA_X":-58.871,"COORDENADA_Y":-34.44562,"OPERADOR":"OPESSA PILAR MAGNOLIAS","DIRECCION":"LAS MAGNOLIAS Y RUTA PANAMERICANA KM 50","LOCALIDAD":"PILAR"},{"APIES":3105,"COORDENADA_X":-58.42904,"COORDENADA_Y":-34.6085,"OPERADOR":"OPESSA YATAY CABA","DIRECCION":"AVENIDA DIAZ VELEZ 4373 Y YATAY","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":3318,"COORDENADA_X":-58.4322,"COORDENADA_Y":-34.58312,"OPERADOR":"OPESSA NICARAGUA CABA","DIRECCION":"AVENIDA J B JUSTO 1215 Y NICARAGUA","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":184,"COORDENADA_X":-58.51175,"COORDENADA_Y":-34.52389,"OPERADOR":"OPESSA UGARTE","DIRECCION":"AVENIDA GOB. UGARTE 3501 Y PANAMERICANA","LOCALIDAD":"MUNRO"},{"APIES":1201,"COORDENADA_X":-58.1842,"COORDENADA_Y":-26.18812,"OPERADOR":"OPESSA FORMOSA","DIRECCION":"GOBERNADOR GUTNISKI 1701","LOCALIDAD":"FORMOSA"},{"APIES":3330,"COORDENADA_X":-65.403,"COORDENADA_Y":-24.78025,"OPERADOR":"OPESSA SALTA","DIRECCION":"AVENIDA TOLEDO Y PASAJE N. ROLDAN","LOCALIDAD":"SALTA"},{"APIES":3319,"COORDENADA_X":-62.25364,"COORDENADA_Y":-38.73009,"OPERADOR":"OPESSA BAHIA BLANCA PARCHAPPE","DIRECCION":"AVENIDA PARCHAPPE Y FALUCHO","LOCALIDAD":"BAHIA BLANCA"},{"APIES":1414,"COORDENADA_X":-58.6923,"COORDENADA_Y":-34.57289,"OPERADOR":"OPESSA BELLA VISTA","DIRECCION":"AVENIDA GASPAR CAMPOS Y MORON","LOCALIDAD":"BELLA VISTA"},{"APIES":504,"COORDENADA_X":-57.96895,"COORDENADA_Y":-34.90079,"OPERADOR":"OPESSA LA PLATA 7 Y 32","DIRECCION":"CALLE 7 Y CALLE 32","LOCALIDAD":"LA PLATA"},{"APIES":983,"COORDENADA_X":-60.66697,"COORDENADA_Y":-32.96364,"OPERADOR":"OPESSA ROSARIO OVIDIO LAGOS","DIRECCION":"27 DE FEBRERO 2801 Y OVIDIO LAGOS","LOCALIDAD":"ROSARIO"},{"APIES":1975,"COORDENADA_X":-65.29137,"COORDENADA_Y":-43.26342,"OPERADOR":"OPESSA TRELEW","DIRECCION":"AVENIDA HIPOLITO YRIGOYEN Y MARIA HUMPHREYS","LOCALIDAD":"TRELEW"},{"APIES":973,"COORDENADA_X":-60.65522,"COORDENADA_Y":-32.95017,"OPERADOR":"OPESSA ACA ROSARIO OROÑO","DIRECCION":"BOULEVARD OROÑO 1302 Y TRES DE FEBRERO","LOCALIDAD":"ROSARIO"},{"APIES":160,"COORDENADA_X":-58.52754,"COORDENADA_Y":-34.48164,"OPERADOR":"OPESSA SAN ISIDRO HIPODROMO","DIRECCION":"AVENIDA BERNABE MARQUEZ 1195 Y ANDRES ROLON","LOCALIDAD":"SAN ISIDRO"},{"APIES":2531,"COORDENADA_X":-68.79445,"COORDENADA_Y":-32.9037,"OPERADOR":"OPESSA MENDOZA SHOPPING","DIRECCION":"ACCESO ESTE Y AVELLANEDA","LOCALIDAD":"SAN JOSE"},{"APIES":1910,"COORDENADA_X":-71.30973022,"COORDENADA_Y":-41.13463457,"OPERADOR":"OPESSA BARILOCHE CENTRO","DIRECCION":"MORENO 19 Y MORALES","LOCALIDAD":"SAN CARLOS DE BARILOCHE"},{"APIES":2446,"COORDENADA_X":-65.19339428,"COORDENADA_Y":-26.83351697,"OPERADOR":"OPESSA TUCUMAN TERMINAL","DIRECCION":"B. ARAOZ Y W. POSE","LOCALIDAD":"SAN MIGUEL DE TUCUMAN"},{"APIES":30943,"COORDENADA_X":-58.6428,"COORDENADA_Y":-34.4403,"OPERADOR":"OPESSA NORDELTA","DIRECCION":"AVENIDA DE LOS LAGOS 330","LOCALIDAD":"TIGRE"},{"APIES":1554,"COORDENADA_X":-67.49705,"COORDENADA_Y":-45.86542,"OPERADOR":"OPESSA ACA COMODORO RIVADAVIA","DIRECCION":"ALVEAR Y DORREGO","LOCALIDAD":"COMODORO RIVADAVIA"},{"APIES":3334,"COORDENADA_X":-65.242287,"COORDENADA_Y":-26.81026333,"OPERADOR":"OPESSA TUCUMAN BULNES","DIRECCION":"AVENIDA BELGRANO Y BULNES","LOCALIDAD":"SAN MIGUEL DE TUCUMAN"},{"APIES":1847,"COORDENADA_X":-56.8705,"COORDENADA_Y":-37.11009,"OPERADOR":"OPESSA ACA PINAMAR","DIRECCION":"JASON Y JUPITER","LOCALIDAD":"PINAMAR"},{"APIES":989,"COORDENADA_X":-60.64645,"COORDENADA_Y":-32.99045,"OPERADOR":"OPESSA ACA ROSARIO URIBURU","DIRECCION":"AVENIDA GENERAL SAN MARTIN Y AVENIDA URIBURU","LOCALIDAD":"ROSARIO"},{"APIES":2918,"COORDENADA_X":-58.01639,"COORDENADA_Y":-31.39505,"OPERADOR":"OPESSA CONCORDIA CENTRO","DIRECCION":"CATAMARCA 90 Y PELLEGRINI","LOCALIDAD":"CONCORDIA"},{"APIES":1676,"COORDENADA_X":-60.9447,"COORDENADA_Y":-34.59405,"OPERADOR":"OPESSA ACA JUNIN","DIRECCION":"GRAL. CORNELIO SAAVEDRA Y LEBEHNSON","LOCALIDAD":"JUNIN"},{"APIES":2694,"COORDENADA_X":-68.514,"COORDENADA_Y":-31.54137,"OPERADOR":"OPESSA ACA SAN JUAN","DIRECCION":"9 DE JULIO ESTE 802 Y RAWSON","LOCALIDAD":"SAN JUAN"},{"APIES":1335,"COORDENADA_X":-58.98205,"COORDENADA_Y":-27.45464,"OPERADOR":"OPESSA ACA RESISTENCIA","DIRECCION":"AVENIDA 9 DE JULIO 499 Y AVENIDA ITALIA","LOCALIDAD":"RESISTENCIA"},{"APIES":2102,"COORDENADA_X":-64.22604,"COORDENADA_Y":-31.36395,"OPERADOR":"OPESSA CORDOBA LA CORDILLERA","DIRECCION":"AVENIDA DE LA CORDILLERA 3947 Y SPILIMBERGO","LOCALIDAD":"CORDOBA"},{"APIES":2784,"COORDENADA_X":-68.33647,"COORDENADA_Y":-34.61425,"OPERADOR":"OPESSA ACA SAN RAFAEL","DIRECCION":"AVENIDA HIPOLITO YRIGOYEN 515 Y 9 DE JULIO","LOCALIDAD":"SAN RAFAEL"},{"APIES":82,"COORDENADA_X":-58.44684,"COORDENADA_Y":-34.60805,"OPERADOR":"OPESSA ACA CABALLITO CABA","DIRECCION":"AVENIDA GAONA 1204 Y MARTIN DE GAINZA","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":1105,"COORDENADA_X":-58.00604,"COORDENADA_Y":-31.29497,"OPERADOR":"OPESSA CONCORDIA TERMAS","DIRECCION":"HUARTE Y M ROSCH","LOCALIDAD":"CONCORDIA"},{"APIES":3088,"COORDENADA_X":-58.68642,"COORDENADA_Y":-34.64889,"OPERADOR":"OPESSA ITUZAINGO","DIRECCION":"INT CARLOS RATTI 1720 Y MONROE","LOCALIDAD":"ITUZAINGO"},{"APIES":2,"COORDENADA_X":-58.3892,"COORDENADA_Y":-34.64512,"OPERADOR":"OPESSA ACA VELEZ SARSFIELD CABA","DIRECCION":"AVENIDA DR VELEZ SARSFIELD 850 Y TOLL","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":2657,"COORDENADA_X":-68.5145,"COORDENADA_Y":-31.53605,"OPERADOR":"OPESSA SAN JUAN RIVADAVIA","DIRECCION":"AVENIDA RAWSON SUR 216 Y RIVADAVIA","LOCALIDAD":"SAN JUAN"},{"APIES":44,"COORDENADA_X":-58.45034,"COORDENADA_Y":-34.68075,"OPERADOR":"OPESSA ACA AUTODROMO CABA","DIRECCION":"AVENIDA CNEL JOSE SEGUNDO ROCA 4550 Y ESCALADA","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":1925,"COORDENADA_X":-71.34292,"COORDENADA_Y":-40.15462,"OPERADOR":"OPESSA SAN MARTIN DE LOS ANDES","DIRECCION":"AVENIDA KOESSLER Y CURRUHUINCA","LOCALIDAD":"SAN MARTIN DE LOS ANDES"},{"APIES":1238,"COORDENADA_X":-68.79312,"COORDENADA_Y":-32.93247,"OPERADOR":"OPESSA MENDOZA MAIPU","DIRECCION":"RODRIGUEZ PENA 1130 Y CORONEL RODRIGUEZ","LOCALIDAD":"MAIPU"},{"APIES":2782,"COORDENADA_X":-68.33492,"COORDENADA_Y":-34.62559,"OPERADOR":"OPESSA SAN RAFAEL SARMIENTO","DIRECCION":"AVENIDA EL LIBERTADOR Y SARMIENTO","LOCALIDAD":"SAN RAFAEL"},{"APIES":3073,"COORDENADA_X":-58.47172,"COORDENADA_Y":-34.52537,"OPERADOR":"OPESSA MELO","DIRECCION":"AVENIDA DEL LIBERTADOR Y MELO","LOCALIDAD":"VICENTE LOPEZ"},{"APIES":84,"COORDENADA_X":-58.41337,"COORDENADA_Y":-34.61054,"OPERADOR":"OPESSA ACA ONCE CABA","DIRECCION":"AVENIDA RIVADAVIA 3341 Y AGUERO","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":95,"COORDENADA_X":-58.4447,"COORDENADA_Y":-34.58487,"OPERADOR":"OPESSA DORREGO CABA","DIRECCION":"AVENIDA CORDOBA 5984 Y DORREGO","LOCALIDAD":"CIUDAD DE BUENOS AIRES"},{"APIES":523,"COORDENADA_X":-57.89605,"COORDENADA_Y":-34.87522,"OPERADOR":"OPESSA BERISSO REFINERIA","DIRECCION":"CALLE 2 Y CALLE 158","LOCALIDAD":"BERISSO"},{"APIES":3228,"COORDENADA_X":-68.09025,"COORDENADA_Y":-38.95967,"OPERADOR":"OPESSA NEUQUEN","DIRECCION":"JUAN JULIAN LASTRA Y SAAVEDRA","LOCALIDAD":"NEUQUEN"},{"APIES":2291,"COORDENADA_X":-65.23183685,"COORDENADA_Y":-26.82531492,"OPERADOR":"OPESSA TUCUMAN MATE DE LUNA MANO CENTRO","DIRECCION":"AVENIDA FERNANDO MATE DE LUNA Y AVENIDA COLON","LOCALIDAD":"SAN MIGUEL DE TUCUMAN"},{"APIES":2039,"COORDENADA_X":-57.55295,"COORDENADA_Y":-37.96547,"OPERADOR":"OPESSA MAR DEL PLATA TEJEDOR","DIRECCION":"AVENIDA CONSTITUCION Y CARLOS TEJEDOR","LOCALIDAD":"MAR DEL PLATA"}];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let refApies = null;
+let rows = STATIONS.map(s => ({ ...s, distKm: null, durSec: null, method: null, status: 'pending' }));
+let running = false;
+let stopFlag = false;
+let maxDist = 0;
+let showDebug = false;
+
+// ═══════════════════════════════════════════════════════
+// INIT — populate selector
+// ═══════════════════════════════════════════════════════
+(function init() {
+  const sel = document.getElementById('refSelect');
+  const sorted = [...STATIONS].sort((a,b) => a.APIES - b.APIES);
+  sorted.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.APIES;
+    opt.textContent = `${s.APIES} — ${s.OPERADOR} (${s.LOCALIDAD})`;
+    sel.appendChild(opt);
+  });
+  // pre-select 973
+  sel.value = '973';
+  onRefChange();
+  renderTable();
+})();
+
+function onRefChange() {
+  const v = document.getElementById('refSelect').value;
+  if (!v) { refApies = null; document.getElementById('refInfo').innerHTML = 'Seleccioná el APIES de referencia.'; document.getElementById('btnCalc').disabled = true; return; }
+  refApies = parseInt(v);
+  const ref = STATIONS.find(s => s.APIES === refApies);
+  document.getElementById('refInfo').innerHTML =
+    `<strong>APIES ${ref.APIES}</strong> · ${ref.OPERADOR} · ${ref.DIRECCION} · <em>${ref.LOCALIDAD}</em><br>
+     Coordenadas: lon ${ref.COORDENADA_X.toFixed(5)}, lat ${ref.COORDENADA_Y.toFixed(5)}`;
+  document.getElementById('btnCalc').disabled = false;
+  // reset results when ref changes
+  resetCalc();
+}
+
+// ═══════════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════════
+
+// Haversine fallback
+function haversine(lon1, lat1, lon2, lat2) {
+  const R = 6371, toR = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toR, dLon = (lon2 - lon1) * toR;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+// OSRM servers to try in order
+const OSRM = [
+  'https://router.project-osrm.org',
+  'https://routing.openstreetmap.de/routed-car',
+];
+let osrmCursor = 0;
+
+async function fetchOSRM(lon1, lat1, lon2, lat2) {
+  // Try each server once
+  for (let i = 0; i < OSRM.length; i++) {
+    const base = OSRM[(osrmCursor + i) % OSRM.length];
+    const url = `${base}/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) { debugLog(`${base} → HTTP ${res.status}`, 'err'); continue; }
+      const data = await res.json();
+      if (data.code !== 'Ok' || !data.routes?.length) { debugLog(`${base} → code=${data.code}`, 'err'); continue; }
+      debugLog(`${base} → OK ✓`, 'ok');
+      return { distM: data.routes[0].distance, durS: data.routes[0].duration };
+    } catch(e) {
+      debugLog(`${base} → ${e.message}`, 'err');
+    }
+  }
+  return null;
+}
+
+async function calcRoute(row, ref) {
+  // Try real routing
+  const result = await fetchOSRM(ref.COORDENADA_X, ref.COORDENADA_Y, row.COORDENADA_X, row.COORDENADA_Y);
+  if (result) {
+    row.distKm = result.distM / 1000;
+    row.durSec = result.durS;
+    row.method = 'route';
+    row.status = 'done';
+    return;
+  }
+  // Fallback: haversine × 1.35 factor (typical road vs crow-fly ratio Argentina)
+  const crow = haversine(ref.COORDENADA_X, ref.COORDENADA_Y, row.COORDENADA_X, row.COORDENADA_Y);
+  row.distKm = crow * 1.35;
+  // Estimate time: avg 80 km/h
+  row.durSec = (row.distKm / 80) * 3600;
+  row.method = 'linear';
+  row.status = 'done';
+  debugLog(`APIES ${row.APIES}: usando distancia lineal ×1.35 = ${row.distKm.toFixed(1)} km`, 'info');
+}
+
+// ═══════════════════════════════════════════════════════
+// CALC LOOP
+// ═══════════════════════════════════════════════════════
+async function startCalc() {
+  if (running || !refApies) return;
+
+  // First: test connectivity with a quick probe
+  debugLog('Probando conexión con OSRM...', 'info');
+  const ref = STATIONS.find(s => s.APIES === refApies);
+  const testClose = STATIONS.find(s => s.APIES !== refApies);
+  const testResult = await fetchOSRM(ref.COORDENADA_X, ref.COORDENADA_Y, testClose.COORDENADA_X, testClose.COORDENADA_Y);
+  if (!testResult) {
+    debugLog('OSRM no disponible desde este navegador. Se usará distancia lineal ×1.35 para todos.', 'err');
+  } else {
+    debugLog(`OSRM OK — primer test: ${(testResult.distM/1000).toFixed(1)} km`, 'ok');
+  }
+
+  running = true; stopFlag = false;
+  document.getElementById('btnCalc').disabled = true;
+  document.getElementById('btnStop').disabled = false;
+  document.getElementById('btnReset').disabled = true;
+  document.getElementById('refSelect').disabled = true;
+  document.getElementById('progBox').classList.add('on');
+  if (showDebug) document.getElementById('debugBox').classList.add('on');
+
+  const pending = rows.filter(r => r.APIES !== refApies && r.status === 'pending');
+  const total = pending.length;
+  let done = 0;
+
+  // Mark ref row
+  const refRow = rows.find(r => r.APIES === refApies);
+  if (refRow) { refRow.status = 'ref'; refRow.distKm = 0; refRow.durSec = 0; refRow.method = 'ref'; }
+
+  for (const row of pending) {
+    if (stopFlag) break;
+    row.status = 'loading';
+    renderTable();
+    setProgress(done, total, `Calculando APIES ${row.APIES} — ${row.OPERADOR}...`);
+
+    await calcRoute(row, ref);
+
+    done++;
+    if (row.distKm > maxDist) maxDist = row.distKm;
+    setProgress(done, total, `${done}/${total} — APIES ${row.APIES} → ${row.distKm.toFixed(1)} km (${row.method === 'route' ? 'ruta real' : 'est. lineal'})`);
+    updateStats();
+    renderTable();
+
+    await sleep(testResult ? 180 : 10); // rate-limit only if OSRM is working
+  }
+
+  running = false; stopFlag = false;
+  document.getElementById('btnCalc').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+  document.getElementById('btnReset').disabled = false;
+  document.getElementById('refSelect').disabled = false;
+
+  const doneCount = rows.filter(r => r.status === 'done').length;
+  if (doneCount > 0) {
+    document.getElementById('btnXlsx').disabled = false;
+    document.getElementById('btnCsv').disabled = false;
+  }
+  toast(`✓ Completado: ${doneCount} estaciones calculadas`);
+}
+
+function stopCalc() {
+  stopFlag = true;
+  document.getElementById('btnStop').disabled = true;
+  toast('⏹ Detenido. Hacé clic en "Calcular" para retomar.');
+}
+
+function resetCalc() {
+  if (running) return;
+  rows = STATIONS.map(s => ({ ...s, distKm: null, durSec: null, method: null, status: 'pending' }));
+  maxDist = 0;
+  ['btnXlsx','btnCsv'].forEach(id => document.getElementById(id).disabled = true);
+  document.getElementById('progBox').classList.remove('on');
+  updateStats(); renderTable();
+}
+
+function setProgress(done, total, msg) {
+  const pct = total > 0 ? done/total*100 : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progCnt').textContent = `${done} / ${total}`;
+  document.getElementById('progStatus').textContent = msg;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════
+function updateStats() {
+  const done = rows.filter(r => r.status === 'done' && r.distKm > 0);
+  document.getElementById('sDone').textContent = done.length;
+  document.getElementById('sRouted').textContent = done.filter(r => r.method === 'route').length;
+  if (!done.length) return;
+  const dists = done.map(r => r.distKm);
+  maxDist = Math.max(...dists);
+  document.getElementById('sMax').textContent = Math.max(...dists).toFixed(1) + ' km';
+  document.getElementById('sMin').textContent = Math.min(...dists).toFixed(1) + ' km';
+  document.getElementById('sAvg').textContent = (dists.reduce((a,b)=>a+b,0)/dists.length).toFixed(1) + ' km';
+}
+
+// ═══════════════════════════════════════════════════════
+// TABLE
+// ═══════════════════════════════════════════════════════
+function fmtTime(sec) {
+  if (sec == null) return '—';
+  if (sec === 0) return '—';
+  const h = Math.floor(sec/3600), m = Math.round((sec%3600)/60);
+  return h > 0 ? `${h}h ${String(m).padStart(2,'0')}min` : `${m} min`;
+}
+
+function distColor(km, method) {
+  if (method === 'ref') return 'var(--cyan)';
+  if (method === 'linear') return 'var(--yellow)';
+  if (km < 100) return 'var(--green)';
+  if (km < 500) return 'var(--yellow)';
+  return 'var(--orange)';
+}
+
+function mapsUrl(row) {
+  if (!refApies) return '#';
+  const ref = STATIONS.find(s => s.APIES === refApies);
+  return `https://www.google.com/maps/dir/${ref.COORDENADA_Y},${ref.COORDENADA_X}/${row.COORDENADA_Y},${row.COORDENADA_X}/`;
+}
+
+function renderTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const sort = document.getElementById('sortSel').value;
+
+  let data = [...rows];
+  if (q) data = data.filter(r =>
+    String(r.APIES).includes(q) ||
+    r.OPERADOR.toLowerCase().includes(q) ||
+    r.LOCALIDAD.toLowerCase().includes(q) ||
+    r.DIRECCION.toLowerCase().includes(q)
+  );
+
+  const INF = Infinity;
+  if (sort === 'dist_asc') data.sort((a,b) => (a.distKm??INF) - (b.distKm??INF));
+  else if (sort === 'dist_desc') data.sort((a,b) => (b.distKm??-INF) - (a.distKm??-INF));
+  else if (sort === 'time_asc') data.sort((a,b) => (a.durSec??INF) - (b.durSec??INF));
+  else if (sort === 'localidad') data.sort((a,b) => a.LOCALIDAD.localeCompare(b.LOCALIDAD));
+  else data.sort((a,b) => a.APIES - b.APIES);
+
+  const isRef = r => r.APIES === refApies;
+
+  document.getElementById('tbody').innerHTML = data.length === 0
+    ? `<tr><td colspan="8" class="empty">Sin resultados para "${q}"</td></tr>`
+    : data.map(r => {
+        const ref = isRef(r);
+        let distCell = '', timeCell = '—', badge = '';
+
+        if (ref) {
+          distCell = `<span class="ref-label-cell">★ PUNTO BASE</span>`;
+        } else if (r.status === 'loading') {
+          distCell = `<span class="status-loading">calculando...</span>`;
+        } else if (r.status === 'pending') {
+          distCell = `<span class="status-pending">pendiente</span>`;
+        } else if (r.status === 'done') {
+          const barPct = maxDist > 0 ? Math.min(r.distKm/maxDist*100, 100) : 0;
+          badge = r.method === 'route'
+            ? `<span class="method-badge method-route">ruta real</span>`
+            : `<span class="method-badge method-linear">est. lineal ×1.35</span>`;
+          distCell = `
+            <span class="dist-val" style="color:${distColor(r.distKm, r.method)}">${r.distKm.toFixed(2)} km</span>
+            <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${barPct}%"></div></div>
+            ${badge}`;
+          timeCell = `<span class="time-val">${fmtTime(r.durSec)}</span>`;
+        }
+
+        const mapLink = ref ? '—' : `<a class="map-link" href="${mapsUrl(r)}" target="_blank">↗ Google Maps</a>`;
+
+        return `<tr class="${ref ? 'ref-row' : ''}">
+          <td><span class="apies-num ${ref ? 'is-ref' : ''}">${r.APIES}${ref ? ' ★' : ''}</span></td>
+          <td><div class="op-name" title="${r.OPERADOR}">${r.OPERADOR}</div><div class="addr" title="${r.DIRECCION}">${r.DIRECCION}</div></td>
+          <td><span style="font-size:11px;color:var(--muted)">${r.LOCALIDAD}</span></td>
+          <td><span class="coord">${r.COORDENADA_X.toFixed(5)}</span></td>
+          <td><span class="coord">${r.COORDENADA_Y.toFixed(5)}</span></td>
+          <td>${distCell}</td>
+          <td>${timeCell}</td>
+          <td>${mapLink}</td>
+        </tr>`;
+      }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════
+function refLabel() { return `APIES ${refApies}`; }
+
+function exportCSV() {
+  const h = ['APIES','OPERADOR','LOCALIDAD','DIRECCION','COORDENADA_X','COORDENADA_Y',`DISTANCIA_CON_${refLabel()}_km`,`TIEMPO_ESTIMADO`,`METODO`];
+  const body = rows.map(r => [
+    r.APIES, `"${r.OPERADOR}"`, `"${r.LOCALIDAD}"`, `"${r.DIRECCION}"`,
+    r.COORDENADA_X, r.COORDENADA_Y,
+    r.APIES === refApies ? 'PUNTO BASE' : (r.distKm != null ? r.distKm.toFixed(2) : ''),
+    r.APIES === refApies ? 'PUNTO BASE' : fmtTime(r.durSec),
+    r.method || ''
+  ]);
+  const csv = [h.join(','), ...body.map(r => r.join(','))].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `distancias_apies_${refApies}.csv` });
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('✓ CSV exportado');
+}
+
+function exportXLSX() {
+  if (!window.XLSX) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = doXLSX; document.head.appendChild(s);
+  } else doXLSX();
+}
+
+function doXLSX() {
+  const XLSX = window.XLSX;
+  const colLabel = `DISTANCIA CON APIES ${refApies} (km)`;
+  const data = [['APIES','OPERADOR','LOCALIDAD','DIRECCION','COORDENADA X (LON)','COORDENADA Y (LAT)', colLabel,'TIEMPO ESTIMADO','METODO CALCULO']];
+  rows.forEach(r => {
+    data.push([
+      r.APIES, r.OPERADOR, r.LOCALIDAD, r.DIRECCION,
+      r.COORDENADA_X, r.COORDENADA_Y,
+      r.APIES === refApies ? 'PUNTO BASE' : (r.distKm != null ? parseFloat(r.distKm.toFixed(2)) : ''),
+      r.APIES === refApies ? 'PUNTO BASE' : fmtTime(r.durSec),
+      r.method === 'route' ? 'Ruta real (OSRM)' : r.method === 'linear' ? 'Distancia lineal ×1.35' : r.method === 'ref' ? 'Punto base' : ''
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:10},{wch:36},{wch:24},{wch:50},{wch:16},{wch:16},{wch:28},{wch:18},{wch:24}];
+
+  // Style header row
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const cell = ws[XLSX.utils.encode_cell({r:0, c})];
+    if (cell) {
+      cell.s = { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '0F1623' } } };
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, `Distancias APIES ${refApies}`);
+  XLSX.writeFile(wb, `distancias_apies_${refApies}.xlsx`);
+  toast('✓ Excel exportado');
+}
+
+// ═══════════════════════════════════════════════════════
+// DEBUG + TOAST
+// ═══════════════════════════════════════════════════════
+function debugLog(msg, type = '') {
+  const box = document.getElementById('debugBox');
+  const line = document.createElement('div');
+  line.className = type;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function toggleDebug() {
+  showDebug = !showDebug;
+  document.getElementById('debugBox').classList.toggle('on', showDebug);
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
